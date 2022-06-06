@@ -92,7 +92,11 @@ async function promisify(method, args) {
         }
     });
 
-    let websiteConfiguration = {};
+    let websiteConfiguration = {
+        IndexDocument: {
+            Suffix: 'index.html',
+        },
+    };
 
     try {
         websiteConfiguration =  await promisify('getBucketWebsite', {
