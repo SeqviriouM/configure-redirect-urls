@@ -38,7 +38,7 @@ async function asyncListObjects(args) {
 
     while (!loadedAllObjects) {
         const response = await asyncListObjects({
-            Bucket: 'preprod.cloudil.co.il',
+            Bucket: BUCKET_NAME,
             MaxKeys: 1000,
             ContinuationToken: nextPageToken,
         });
