@@ -53,6 +53,40 @@ async function asyncListObjects(args) {
         }
     }
 
+    const routingRules = [];
+    const INDEX_HTML_PART = '/index.html';
+    const HTML_PART = '.html';
+
     console.log('OBJECTS', objects);
+
+    objects.forEach((item) => {
+        if (item.Key.endsWith('/index.html')) {
+            routingRules.push({
+                Condition: {
+                    KeyPrefixEquals: item.Key.slice(0, -INDEX_HTML_PART.length),
+                },
+                Redirect: {
+                    ReplaceKeyWith: item.Key,
+                }
+            });
+        } else {
+            routingRules.push({
+                Condition: {
+                    KeyPrefixEquals: item.Key.slice(0, -HTML_PART.length),
+                },
+                Redirect: {
+                    ReplaceKeyWith: item.Key,
+                }
+            });
+        }
+    })
+
+    // s3.putBucketWebsite({
+    //     WebsiteConfiguration: {
+    //         RoutingRules: routingRules,
+    //     }
+    // })
+
+    console.log('ROUTING_RULES', routingRules);
 })()
 
