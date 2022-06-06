@@ -16,19 +16,28 @@ const s3 = new AWS.S3({
 
 });
 
-async function asyncListObjects(args) {
+async function promisify(method, args) {
     return new Promise((resolve, reject) => {
-        s3.listObjectsV2(args, (err, data) => {
+        s3[method](args, (err, data) => {
             if (err) {
                 return reject(err);
             }
-
             return resolve(data);
         });
     });
 }
 
-
+// async function asyncListObjects(args) {
+//     return new Promise((resolve, reject) => {
+//         s3.listObjectsV2(args, (err, data) => {
+//             if (err) {
+//                 return reject(err);
+//             }
+//
+//             return resolve(data);
+//         });
+//     });
+// }
 
 
 (async function () {
@@ -37,7 +46,7 @@ async function asyncListObjects(args) {
     let nextPageToken = '';
 
     while (!loadedAllObjects) {
-        const response = await asyncListObjects({
+        const response = await promisify('listObjectsV2', {
             Bucket: BUCKET_NAME,
             MaxKeys: 1000,
             ContinuationToken: nextPageToken,
@@ -57,36 +66,56 @@ async function asyncListObjects(args) {
     const INDEX_HTML_PART = '/index.html';
     const HTML_PART = '.html';
 
-    console.log('OBJECTS', objects);
-
     objects.forEach((item) => {
         if (item.Key.endsWith('/index.html')) {
             routingRules.push({
                 Condition: {
+                    HttpErrorCodeReturnedEquals: '404',
                     KeyPrefixEquals: item.Key.slice(0, -INDEX_HTML_PART.length),
                 },
                 Redirect: {
+                    HttpRedirectCode: '302',
                     ReplaceKeyWith: item.Key,
                 }
             });
         } else {
             routingRules.push({
                 Condition: {
+                    HttpErrorCodeReturnedEquals: '404',
                     KeyPrefixEquals: item.Key.slice(0, -HTML_PART.length),
                 },
                 Redirect: {
+                    HttpRedirectCode: '302',
                     ReplaceKeyWith: item.Key,
                 }
             });
         }
-    })
+    });
 
-    // s3.putBucketWebsite({
-    //     WebsiteConfiguration: {
-    //         RoutingRules: routingRules,
-    //     }
-    // })
+    let websiteConfiguration = {};
 
-    console.log('ROUTING_RULES', routingRules);
+    try {
+        websiteConfiguration =  await promisify('getBucketWebsite', {
+            Bucket: BUCKET_NAME,
+        });
+    } catch (error) {
+        console.error('Failed to load website configuration', error);
+    }
+
+
+    const nextWebsiteConfiguration = _.mergeWith(websiteConfiguration, {
+        RoutingRules: routingRules,
+    });
+
+    try {
+        const response = await promisify('putBucketWebsite', {
+            Bucket: BUCKET_NAME,
+            WebsiteConfiguration: nextWebsiteConfiguration,
+        });
+
+        console.log('RESPONSE', response);
+    } catch (error) {
+        console.error('Failed to update website configuration', error);
+    }
 })()
 
