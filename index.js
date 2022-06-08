@@ -27,18 +27,6 @@ async function promisify(method, args) {
     });
 }
 
-// async function asyncListObjects(args) {
-//     return new Promise((resolve, reject) => {
-//         s3.listObjectsV2(args, (err, data) => {
-//             if (err) {
-//                 return reject(err);
-//             }
-//
-//             return resolve(data);
-//         });
-//     });
-// }
-
 
 (async function () {
     let loadedAllObjects = false;
@@ -63,21 +51,21 @@ async function promisify(method, args) {
     }
 
     const routingRules = [];
-    const INDEX_HTML_PART = '/index.html';
+    // const INDEX_HTML_PART = '/index.html';
     const HTML_PART = '.html';
 
     objects.forEach((item) => {
         if (item.Key.endsWith('/index.html')) {
-            routingRules.push({
-                Condition: {
-                    HttpErrorCodeReturnedEquals: '404',
-                    KeyPrefixEquals: item.Key.slice(0, -INDEX_HTML_PART.length),
-                },
-                Redirect: {
-                    HttpRedirectCode: '302',
-                    ReplaceKeyWith: item.Key,
-                }
-            });
+            // routingRules.push({
+            //     Condition: {
+            //         HttpErrorCodeReturnedEquals: '404',
+            //         KeyPrefixEquals: item.Key.slice(0, -INDEX_HTML_PART.length),
+            //     },
+            //     Redirect: {
+            //         HttpRedirectCode: '302',
+            //         ReplaceKeyWith: item.Key,
+            //     }
+            // });
         } else {
             routingRules.push({
                 Condition: {
@@ -110,6 +98,8 @@ async function promisify(method, args) {
     const nextWebsiteConfiguration = _.mergeWith(websiteConfiguration, {
         RoutingRules: routingRules,
     });
+
+    console.log('NEXT_WEBSITE_CONFIGURATION', JSON.stringify(nextWebsiteConfiguration))
 
     try {
         const response = await promisify('putBucketWebsite', {
