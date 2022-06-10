@@ -1,6 +1,9 @@
 {
   "name": "configure-redirect-urls",
   "version": "1.0.0",
+  "scripts": {
+    "start": "node index.js"
+  },
   "description": "Script for generating redirect rules for html files in S3",
   "dependencies": {
     "aws-sdk": "^2.1148.0",
